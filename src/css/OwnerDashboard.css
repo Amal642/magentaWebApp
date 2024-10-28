@@ -1,0 +1,56 @@
+/* Admin Container Styling */
+.admin-container {
+    max-width: 600px;
+    width: 90%;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #ffffff;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    text-align: center;
+  }
+  
+  h2 {
+    margin-bottom: 20px;
+    color: #333;
+  }
+  
+  /* Button Group */
+  .button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+  
+  /* Button Styling */
+  .admin-button {
+    width: 100%;
+    max-width: 200px;
+    padding: 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .admin-button:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Responsive Layout */
+  @media (min-width: 768px) {
+    .admin-button {
+      width: calc(50% - 10px);
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .admin-button {
+      width: calc(33.33% - 10px);
+    }
+  }
+  
