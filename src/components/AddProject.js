@@ -75,27 +75,41 @@ const handleAddStage = () =>
   };
 
   const validateAndSubmit = async () => {
+    // Calculate the total percentage of all stages
+    const totalPercentage = selectedStages.reduce((sum, stage) => sum + Number(stage.percentage || 0), 0);
+  
+    // Check if the total percentage equals 100
+    if (totalPercentage !== 100) {
+      setMessage("Total percentage of all stages must equal 100%.");
+      return;
+    }
+  
     setLoading(true);
     try {
-      const projectData = {
+      // Structure lifts and stages with labeled fields for easier retrieval
+      const formattedLifts = lifts.map(lift => ({
+        liftName: lift.name,
+        liftBudget: lift.budget
+      }));
+  
+      const formattedStages = selectedStages.map(stage => ({
+        stageName: stage.stage,
+        stageDays: stage.days,
+        stagePercentage: stage.percentage
+      }));
+  
+      await addDoc(collection(db, "projects"), {
         client: selectedClient,
         location: selectedLocation,
-        lifts: lifts.reduce((acc, lift, index) => {
-          acc[`Lift${index + 1}`] = lift;
-          return acc;
-        }, {}),
-        stages: selectedStages.reduce((acc, stage, index) => {
-          acc[`Stage${index + 1}`] = stage;
-          return acc;
-        }, {}),
-      };
+        lifts: formattedLifts,
+        stages: formattedStages,
+      });
   
-      await addDoc(collection(db, "projects"), projectData);
       setMessage("Project added successfully!");
       setSelectedClient("");
       setSelectedLocation("");
       setLifts([{ name: "", budget: "" }]);
-      setSelectedStages([{ stage: "", days: "" }]);
+      setSelectedStages([{ stage: "", days: "", percentage: "" }]);
     } catch (error) {
       console.error("Error adding project:", error);
       setMessage("Failed to add project. Please try again.");
@@ -103,6 +117,8 @@ const handleAddStage = () =>
       setLoading(false);
     }
   };
+  
+  
 
   return (
     <div className={`add-project-container ${loading ? "blur" : ""}`}>
@@ -148,6 +164,7 @@ const handleAddStage = () =>
               onChange={(e) => handleLiftChange(index, "budget", e.target.value)}
               className="input-field"
             />
+            
           </div>
         ))}
         <button onClick={handleAddLift} className="add-button">Add Lift</button>
@@ -172,6 +189,13 @@ const handleAddStage = () =>
               placeholder="Days"
               value={stage.days}
               onChange={(e) => handleStageChange(index, "days", e.target.value)}
+              className="input-field"
+            />
+            <input
+              type="number"
+              placeholder="% Completion"
+              value={stage.percentage}
+              onChange={(e) => handleStageChange(index, "percentage", e.target.value)}
               className="input-field"
             />
           </div>
