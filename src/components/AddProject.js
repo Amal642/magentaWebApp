@@ -1,7 +1,7 @@
 // src/components/AddProject.js
 import React, { useState, useEffect } from "react";
 import { db } from "../firebaseConfig";
-import { collection, getDocs, doc, getDoc, addDoc } from "firebase/firestore";
+import { collection, getDocs, query, where, addDoc } from "firebase/firestore";
 import "../css/AddProject.css";
 
 function AddProject() {
@@ -9,9 +9,8 @@ function AddProject() {
   const [locations, setLocations] = useState([]);
   const [selectedClient, setSelectedClient] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
-  const [lifts, setLifts] = useState([{ name: "", budget: "" }]);
+  const [lifts, setLifts] = useState([{ name: "", budget: "", stages: [{ stage: "", days: "" }] }]);
   const [stages, setStages] = useState([]);
-  const [selectedStages, setSelectedStages] = useState([{ stage: "", days: "" }]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -35,17 +34,12 @@ function AddProject() {
       if (!selectedClient) return;
   
       try {
-        // First, get the client document ID based on the selected client's name
         const clientsSnapshot = await getDocs(collection(db, "clients"));
         const clientDoc = clientsSnapshot.docs.find((doc) => doc.data().name === selectedClient);
   
         if (clientDoc) {
-          // Fetch the "liftPhases" sub-collection within the selected client document
           const liftPhasesSnapshot = await getDocs(collection(db, "clients", clientDoc.id, "liftPhases"));
-          
-          // Map and set the stage names for the dropdown
-          const fetchedStages = liftPhasesSnapshot.docs.map(doc => doc.data().name);
-          setStages(fetchedStages);
+          setStages(liftPhasesSnapshot.docs.map(doc => doc.data().name));
         } else {
           setStages([]);
         }
@@ -56,60 +50,78 @@ function AddProject() {
     
     fetchStages();
   }, [selectedClient]);
-  
 
-  const handleAddLift = () => setLifts([...lifts, { name: "", budget: "" }]);
+  const handleAddLift = () => setLifts([...lifts, { name: "", budget: "", stages: [{ stage: "", days: "" }] }]);
 
-const handleAddStage = () =>
-  setSelectedStages([...selectedStages, { stage: "", days: "" }]);
-
+  const handleAddStage = (liftIndex) => {
+    const updatedLifts = lifts.map((lift, i) =>
+      i === liftIndex ? { ...lift, stages: [...lift.stages, { stage: "", days: "" }] } : lift
+    );
+    setLifts(updatedLifts);
+  };
 
   const handleLiftChange = (index, field, value) => {
     const updatedLifts = lifts.map((lift, i) => (i === index ? { ...lift, [field]: value } : lift));
     setLifts(updatedLifts);
   };
 
-  const handleStageChange = (index, field, value) => {
-    const updatedStages = selectedStages.map((stage, i) => (i === index ? { ...stage, [field]: value } : stage));
-    setSelectedStages(updatedStages);
+  const handleStageChange = (liftIndex, stageIndex, field, value) => {
+    const updatedLifts = lifts.map((lift, i) => 
+      i === liftIndex 
+        ? { 
+            ...lift, 
+            stages: lift.stages.map((stage, j) => 
+              j === stageIndex ? { ...stage, [field]: value } : stage
+            ) 
+          } 
+        : lift
+    );
+    setLifts(updatedLifts);
   };
 
   const validateAndSubmit = async () => {
-    // Calculate the total percentage of all stages
-    const totalPercentage = selectedStages.reduce((sum, stage) => sum + Number(stage.percentage || 0), 0);
-  
-    // Check if the total percentage equals 100
-    if (totalPercentage !== 100) {
-      setMessage("Total percentage of all stages must equal 100%.");
-      return;
-    }
-  
     setLoading(true);
     try {
-      // Structure lifts and stages with labeled fields for easier retrieval
-      const formattedLifts = lifts.map(lift => ({
-        liftName: lift.name,
-        liftBudget: lift.budget
-      }));
-  
-      const formattedStages = selectedStages.map(stage => ({
-        stageName: stage.stage,
-        stageDays: stage.days,
-        stagePercentage: stage.percentage
-      }));
-  
-      await addDoc(collection(db, "projects"), {
-        client: selectedClient,
-        location: selectedLocation,
-        lifts: formattedLifts,
-        stages: formattedStages,
-      });
-  
-      setMessage("Project added successfully!");
+      // Check if a project exists for the same client and location
+      const projectQuery = query(
+        collection(db, "projects"),
+        where("client", "==", selectedClient),
+        where("location", "==", selectedLocation)
+      );
+      const projectSnapshot = await getDocs(projectQuery);
+      
+      let projectRef;
+
+      if (!projectSnapshot.empty) {
+        projectRef = projectSnapshot.docs[0].ref; // Get the existing project reference
+      } else {
+        // Create a new project if no matching client/location is found
+        const newProject = await addDoc(collection(db, "projects"), {
+          client: selectedClient,
+          location: selectedLocation,
+        });
+        projectRef = newProject;
+      }
+
+      // Add each lift with stages to the same project
+      for (const lift of lifts) {
+        const liftRef = await addDoc(collection(projectRef, "lifts"), {
+          liftName: lift.name,
+          liftBudget: lift.budget,
+        });
+
+        for (const stage of lift.stages) {
+          await addDoc(collection(liftRef, "stages"), {
+            stageName: stage.stage,
+            stageDays: stage.days,
+          });
+        }
+      }
+
+      setMessage("Project and lifts added successfully!");
       setSelectedClient("");
       setSelectedLocation("");
-      setLifts([{ name: "", budget: "" }]);
-      setSelectedStages([{ stage: "", days: "", percentage: "" }]);
+      setLifts([{ name: "", budget: "", stages: [{ stage: "", days: "" }] }]);
     } catch (error) {
       console.error("Error adding project:", error);
       setMessage("Failed to add project. Please try again.");
@@ -117,8 +129,6 @@ const handleAddStage = () =>
       setLoading(false);
     }
   };
-  
-  
 
   return (
     <div className={`add-project-container ${loading ? "blur" : ""}`}>
@@ -148,59 +158,50 @@ const handleAddStage = () =>
 
       <div className="section">
         <h3>Lifts</h3>
-        {lifts.map((lift, index) => (
-          <div key={index} className="lift-row">
+        {lifts.map((lift, liftIndex) => (
+          <div key={liftIndex} className="lift-row">
             <input
               type="text"
               placeholder="Lift Name"
               value={lift.name}
-              onChange={(e) => handleLiftChange(index, "name", e.target.value)}
+              onChange={(e) => handleLiftChange(liftIndex, "name", e.target.value)}
               className="input-field"
             />
             <input
               type="number"
               placeholder="Budget"
               value={lift.budget}
-              onChange={(e) => handleLiftChange(index, "budget", e.target.value)}
+              onChange={(e) => handleLiftChange(liftIndex, "budget", e.target.value)}
               className="input-field"
             />
-            
+
+            {lift.stages.map((stage, stageIndex) => (
+              <div key={stageIndex} className="stage-row">
+                <select
+                  value={stage.stage}
+                  onChange={(e) => handleStageChange(liftIndex, stageIndex, "stage", e.target.value)}
+                  className="input-field"
+                >
+                  <option value="">Select Stage</option>
+                  {stages.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  placeholder="Days"
+                  value={stage.days}
+                  onChange={(e) => handleStageChange(liftIndex, stageIndex, "days", e.target.value)}
+                  className="input-field"
+                />
+              </div>
+            ))}
+            <button onClick={() => handleAddStage(liftIndex)} className="add-button">
+              Add Stage
+            </button>
           </div>
         ))}
         <button onClick={handleAddLift} className="add-button">Add Lift</button>
-      </div>
-
-      <div className="section">
-        <h3>Stages</h3>
-        {selectedStages.map((stage, index) => (
-          <div key={index} className="stage-row">
-            <select
-              value={stage.stage}
-              onChange={(e) => handleStageChange(index, "stage", e.target.value)}
-              className="input-field"
-            >
-              <option value="">Select Stage</option>
-              {stages.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-            <input
-              type="number"
-              placeholder="Days"
-              value={stage.days}
-              onChange={(e) => handleStageChange(index, "days", e.target.value)}
-              className="input-field"
-            />
-            <input
-              type="number"
-              placeholder="% Completion"
-              value={stage.percentage}
-              onChange={(e) => handleStageChange(index, "percentage", e.target.value)}
-              className="input-field"
-            />
-          </div>
-        ))}
-        <button onClick={handleAddStage} className="add-button">Add Stage</button>
       </div>
 
       <button onClick={validateAndSubmit} className="submit-button" disabled={loading}>
