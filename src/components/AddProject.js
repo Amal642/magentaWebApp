@@ -1,8 +1,8 @@
 // src/components/AddProject.js
 import React, { useState, useEffect } from "react";
 import { db } from "../firebaseConfig";
-import { collection, getDocs, addDoc } from "firebase/firestore";
-import "../css/AddProject.css"; // CSS for styling
+import { collection, getDocs, doc, getDoc, addDoc } from "firebase/firestore";
+import "../css/AddProject.css";
 
 function AddProject() {
   const [clients, setClients] = useState([]);
@@ -10,13 +10,13 @@ function AddProject() {
   const [selectedClient, setSelectedClient] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
   const [lifts, setLifts] = useState([{ name: "", budget: "" }]);
-  const [stages, setStages] = useState([{ name: "", percentage: "" }]);
+  const [stages, setStages] = useState([]);
+  const [selectedStages, setSelectedStages] = useState([{ stage: "", days: "" }]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Fetch clients and locations from Firebase
-    const fetchData = async () => {
+    const fetchClientsAndLocations = async () => {
       try {
         const clientsSnapshot = await getDocs(collection(db, "clients"));
         const locationsSnapshot = await getDocs(collection(db, "location"));
@@ -24,48 +24,80 @@ function AddProject() {
         setClients(clientsSnapshot.docs.map(doc => doc.data().name));
         setLocations(locationsSnapshot.docs.map(doc => doc.data().place));
       } catch (error) {
-        console.error("Error fetching data: ", error);
+        console.error("Error fetching clients and locations:", error);
       }
     };
-    fetchData();
+    fetchClientsAndLocations();
   }, []);
+
+  useEffect(() => {
+    const fetchStages = async () => {
+      if (!selectedClient) return;
+  
+      try {
+        // First, get the client document ID based on the selected client's name
+        const clientsSnapshot = await getDocs(collection(db, "clients"));
+        const clientDoc = clientsSnapshot.docs.find((doc) => doc.data().name === selectedClient);
+  
+        if (clientDoc) {
+          // Fetch the "liftPhases" sub-collection within the selected client document
+          const liftPhasesSnapshot = await getDocs(collection(db, "clients", clientDoc.id, "liftPhases"));
+          
+          // Map and set the stage names for the dropdown
+          const fetchedStages = liftPhasesSnapshot.docs.map(doc => doc.data().name);
+          setStages(fetchedStages);
+        } else {
+          setStages([]);
+        }
+      } catch (error) {
+        console.error("Error fetching stages:", error);
+      }
+    };
+    
+    fetchStages();
+  }, [selectedClient]);
+  
 
   const handleAddLift = () => setLifts([...lifts, { name: "", budget: "" }]);
 
-  const handleAddStage = () => setStages([...stages, { name: "", percentage: "" }]);
+const handleAddStage = () =>
+  setSelectedStages([...selectedStages, { stage: "", days: "" }]);
+
 
   const handleLiftChange = (index, field, value) => {
-    const updatedLifts = lifts.map((lift, i) => i === index ? { ...lift, [field]: value } : lift);
+    const updatedLifts = lifts.map((lift, i) => (i === index ? { ...lift, [field]: value } : lift));
     setLifts(updatedLifts);
   };
 
   const handleStageChange = (index, field, value) => {
-    const updatedStages = stages.map((stage, i) => i === index ? { ...stage, [field]: value } : stage);
-    setStages(updatedStages);
+    const updatedStages = selectedStages.map((stage, i) => (i === index ? { ...stage, [field]: value } : stage));
+    setSelectedStages(updatedStages);
   };
 
   const validateAndSubmit = async () => {
-    const totalPercentage = stages.reduce((sum, stage) => sum + Number(stage.percentage || 0), 0);
-    if (totalPercentage !== 100) {
-      setMessage("The total percentage of stages must add up to 100%");
-      return;
-    }
-
     setLoading(true);
     try {
-      await addDoc(collection(db, "projects"), {
+      const projectData = {
         client: selectedClient,
         location: selectedLocation,
-        lifts: lifts.filter(lift => lift.name && lift.budget),
-        stages: stages.filter(stage => stage.name && stage.percentage),
-      });
+        lifts: lifts.reduce((acc, lift, index) => {
+          acc[`Lift${index + 1}`] = lift;
+          return acc;
+        }, {}),
+        stages: selectedStages.reduce((acc, stage, index) => {
+          acc[`Stage${index + 1}`] = stage;
+          return acc;
+        }, {}),
+      };
+  
+      await addDoc(collection(db, "projects"), projectData);
       setMessage("Project added successfully!");
       setSelectedClient("");
       setSelectedLocation("");
       setLifts([{ name: "", budget: "" }]);
-      setStages([{ name: "", percentage: "" }]);
+      setSelectedStages([{ stage: "", days: "" }]);
     } catch (error) {
-      console.error("Error adding project: ", error);
+      console.error("Error adding project:", error);
       setMessage("Failed to add project. Please try again.");
     } finally {
       setLoading(false);
@@ -76,14 +108,26 @@ function AddProject() {
     <div className={`add-project-container ${loading ? "blur" : ""}`}>
       <h2>Add New Project</h2>
 
-      <select value={selectedClient} onChange={(e) => setSelectedClient(e.target.value)} className="input-field">
+      <select
+        value={selectedClient}
+        onChange={(e) => setSelectedClient(e.target.value)}
+        className="input-field"
+      >
         <option value="">Select Client</option>
-        {clients.map(client => <option key={client} value={client}>{client}</option>)}
+        {clients.map(client => (
+          <option key={client} value={client}>{client}</option>
+        ))}
       </select>
 
-      <select value={selectedLocation} onChange={(e) => setSelectedLocation(e.target.value)} className="input-field">
+      <select
+        value={selectedLocation}
+        onChange={(e) => setSelectedLocation(e.target.value)}
+        className="input-field"
+      >
         <option value="">Select Location</option>
-        {locations.map(location => <option key={location} value={location}>{location}</option>)}
+        {locations.map(location => (
+          <option key={location} value={location}>{location}</option>
+        ))}
       </select>
 
       <div className="section">
@@ -111,20 +155,23 @@ function AddProject() {
 
       <div className="section">
         <h3>Stages</h3>
-        {stages.map((stage, index) => (
+        {selectedStages.map((stage, index) => (
           <div key={index} className="stage-row">
-            <input
-              type="text"
-              placeholder="Stage Name"
-              value={stage.name}
-              onChange={(e) => handleStageChange(index, "name", e.target.value)}
+            <select
+              value={stage.stage}
+              onChange={(e) => handleStageChange(index, "stage", e.target.value)}
               className="input-field"
-            />
+            >
+              <option value="">Select Stage</option>
+              {stages.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
             <input
               type="number"
-              placeholder="Percentage"
-              value={stage.percentage}
-              onChange={(e) => handleStageChange(index, "percentage", e.target.value)}
+              placeholder="Days"
+              value={stage.days}
+              onChange={(e) => handleStageChange(index, "days", e.target.value)}
               className="input-field"
             />
           </div>

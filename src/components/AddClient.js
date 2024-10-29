@@ -1,11 +1,12 @@
 // src/components/AddClient.js
 import React, { useState } from "react";
 import { db } from "../firebaseConfig";
-import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, addDoc, doc } from "firebase/firestore";
 import "../css/AddClient.css";
 
 function AddClient() {
   const [clientName, setClientName] = useState("");
+  const [stages, setStages] = useState([{ name: "" }]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -14,7 +15,7 @@ function AddClient() {
       setMessage("Please enter a valid client name.");
       return;
     }
-    setLoading(true); // Start loading
+    setLoading(true);
 
     try {
       // Check if the client already exists
@@ -29,16 +30,34 @@ function AddClient() {
       }
 
       // Add new client to Firestore
-      await addDoc(clientsRef, { name: clientName });
-      setMessage("Client added successfully!");
+      const clientDoc = await addDoc(clientsRef, { name: clientName });
+      
+      // Add stages as a sub-collection inside the client document
+      const stagesCollectionRef = collection(clientDoc, "liftPhases");
+      await Promise.all(
+        stages
+          .filter(stage => stage.name)
+          .map(stage => addDoc(stagesCollectionRef, { name: stage.name }))
+      );
+
+      setMessage("Client and lift phases added successfully!");
       setClientName("");
+      setStages([{ name: "" }]);
     } catch (error) {
       console.error("Error adding client: ", error);
       setMessage("Failed to add client. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    finally {
-        setLoading(false); // End loading
-      }
+  };
+
+  const handleAddStage = () => setStages([...stages, { name: "" }]);
+
+  const handleStageChange = (index, value) => {
+    const updatedStages = stages.map((stage, i) => 
+      i === index ? { ...stage, name: value } : stage
+    );
+    setStages(updatedStages);
   };
 
   return (
@@ -51,6 +70,24 @@ function AddClient() {
         onChange={(e) => setClientName(e.target.value)}
         className="client-input"
       />
+      
+      <div className="stages-section">
+        <h3>Stages of Lift Installation</h3>
+        {stages.map((stage, index) => (
+          <input
+            key={index}
+            type="text"
+            placeholder={`Stage ${index + 1}`}
+            value={stage.name}
+            onChange={(e) => handleStageChange(index, e.target.value)}
+            className="stage-input"
+          />
+        ))}
+        <button onClick={handleAddStage} className="add-stage-button">
+          Add Stage
+        </button>
+      </div>
+
       <button onClick={handleAddClient} className="add-client-button" disabled={loading}>
         Add Client
       </button>
