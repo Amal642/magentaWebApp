@@ -7,6 +7,7 @@ import SupervisorPage from "./components/SupervisorPage";
 import AddClient from "./components/AddClient";
 import AddSupervisor from "./components/AddSupervisor";
 import AddWorkers from "./components/AddWorkers";
+import AddProject from "./components/AddProject";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <Route path="/add-client" element={<AddClient />} />
           <Route path="/add-supervisor" element={<AddSupervisor />} />
           <Route path="/add-worker" element={<AddWorkers />} />
+          <Route path="/add-project" element={<AddProject/>}/>
         </Routes>
       </div>
     </Router>
