@@ -9,6 +9,7 @@ import AddSupervisor from "./components/AddSupervisor";
 import AddWorkers from "./components/AddWorkers";
 import AddProject from "./components/AddProject";
 import AddWorkerAbsence from "./components/AddWorkerAbsence";
+import AddLossHours from "./components/AddLossHours";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/add-worker" element={<AddWorkers />} />
           <Route path="/add-project" element={<AddProject/>}/>
           <Route path="/add-worker-absence" element={<AddWorkerAbsence/>}/>
+          <Route path="/add-loss-hours" element={<AddLossHours/>}/>
         </Routes>
       </div>
     </Router>

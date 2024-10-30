@@ -13,6 +13,7 @@ function AddProject() {
   const [stages, setStages] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [projectName, setProjectName] = useState("");
 
   useEffect(() => {
     const fetchClientsAndLocations = async () => {
@@ -99,6 +100,7 @@ function AddProject() {
         const newProject = await addDoc(collection(db, "projects"), {
           client: selectedClient,
           location: selectedLocation,
+          projectName: projectName,
         });
         projectRef = newProject;
       }
@@ -119,6 +121,7 @@ function AddProject() {
       }
 
       setMessage("Project and lifts added successfully!");
+      setProjectName("");
       setSelectedClient("");
       setSelectedLocation("");
       setLifts([{ name: "", budget: "", stages: [{ stage: "", days: "" }] }]);
@@ -155,7 +158,13 @@ function AddProject() {
           <option key={location} value={location}>{location}</option>
         ))}
       </select>
-
+      <input
+  type="text"
+  placeholder="Enter Project Name"
+  value={projectName}
+  onChange={(e) => setProjectName(e.target.value)}
+  className="input-field"
+/>
       <div className="section">
         <h3>Lifts</h3>
         {lifts.map((lift, liftIndex) => (
