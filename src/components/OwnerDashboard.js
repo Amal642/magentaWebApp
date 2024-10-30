@@ -19,7 +19,7 @@ function OwnerDashboard() {
         <button className="admin-button" onClick={() => navigate("/add-worker")}>Enter Workers Details</button>
         <button className="admin-button">Enter Loss of hours</button>
         <button className="admin-button">Enter Out of Scope works</button>
-        
+        <button className="admin-button" onClick={() => navigate("/add-worker-absence")}>Enter Worker Absence</button>
       </div>
     </div>
   );
