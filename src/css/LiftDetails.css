@@ -1,0 +1,14 @@
+.lift-details-container {
+    padding: 20px;
+  }
+  
+  .stage-item {
+    border: 1px solid #ccc;
+    padding: 15px;
+    margin-bottom: 10px;
+  }
+  
+  .stage-item button {
+    margin-left: 10px;
+  }
+  

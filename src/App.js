@@ -1,6 +1,6 @@
 // src/App.js
 import React from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes,useParams } from "react-router-dom";
 import Login from "./components/Login";
 import OwnerDashboard from "./components/OwnerDashboard";
 import SupervisorPage from "./components/SupervisorPage";
@@ -10,6 +10,10 @@ import AddWorkers from "./components/AddWorkers";
 import AddProject from "./components/AddProject";
 import AddWorkerAbsence from "./components/AddWorkerAbsence";
 import AddLossHours from "./components/AddLossHours";
+import OnGoingProjects from "./components/onGoingProjects";
+import ProjectDetails from "./components/ProjectDetails";
+import LiftDetails from "./components/LiftDetails";
+import StageDetailsPage from "./components/StageDetailsPage";
 
 function App() {
   return (
@@ -25,7 +29,13 @@ function App() {
           <Route path="/add-project" element={<AddProject/>}/>
           <Route path="/add-worker-absence" element={<AddWorkerAbsence/>}/>
           <Route path="/add-loss-hours" element={<AddLossHours/>}/>
-        </Routes>
+          <Route path="/ongoing-projects" element={<OnGoingProjects/>}/>
+          <Route path="/project/:projectId" element={<ProjectDetails />} />
+          <Route path="/project/:projectId/lift/:liftId" element={<LiftDetails />} />
+          <Route path="/stage-details/:projectId/:liftId/:stageId" element={<StageDetailsPage/>} />
+
+
+          </Routes>
       </div>
     </Router>
   );

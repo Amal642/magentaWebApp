@@ -113,6 +113,7 @@ function AddProject() {
         const liftRef = await addDoc(collection(projectRef, "lifts"), {
           liftName: lift.name,
           liftBudget: lift.budget,
+          completionStatus: false
         });
   
         for (const stage of lift.stages) {
