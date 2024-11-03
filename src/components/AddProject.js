@@ -83,43 +83,47 @@ function AddProject() {
   const validateAndSubmit = async () => {
     setLoading(true);
     try {
-      // Check if a project exists for the same client and location
+      // Check if a project exists for the same client, projectName, and location
       const projectQuery = query(
         collection(db, "projects"),
         where("client", "==", selectedClient),
-        where("location", "==", selectedLocation)
+        where("location", "==", selectedLocation),
+        where("projectName", "==", projectName)
       );
       const projectSnapshot = await getDocs(projectQuery);
-      
+  
       let projectRef;
-
+  
       if (!projectSnapshot.empty) {
-        projectRef = projectSnapshot.docs[0].ref; // Get the existing project reference
+        // If a project with the same client, location, and projectName exists, use it
+        projectRef = projectSnapshot.docs[0].ref;
       } else {
-        // Create a new project if no matching client/location is found
+        // Create a new project if no matching client/location/projectName is found
         const newProject = await addDoc(collection(db, "projects"), {
           client: selectedClient,
           location: selectedLocation,
           projectName: projectName,
+          completionStatus: false // Add completion status as "no"
         });
         projectRef = newProject;
       }
-
-      // Add each lift with stages to the same project
+  
+      // Add each lift with stages to the project
       for (const lift of lifts) {
         const liftRef = await addDoc(collection(projectRef, "lifts"), {
           liftName: lift.name,
           liftBudget: lift.budget,
         });
-
+  
         for (const stage of lift.stages) {
           await addDoc(collection(liftRef, "stages"), {
             stageName: stage.stage,
             stageDays: stage.days,
+            completionStatus: false
           });
         }
       }
-
+  
       setMessage("Project and lifts added successfully!");
       setProjectName("");
       setSelectedClient("");
@@ -132,6 +136,7 @@ function AddProject() {
       setLoading(false);
     }
   };
+  
 
   return (
     <div className={`add-project-container ${loading ? "blur" : ""}`}>

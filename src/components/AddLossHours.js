@@ -40,35 +40,44 @@ function AddLossHours() {
   useEffect(() => {
     const fetchProjects = async () => {
       if (!selectedClient) return;
-
+  
       try {
         const projectsRef = collection(db, "projects");
         const projectsQuery = query(projectsRef, where("client", "==", selectedClient));
         const projectsSnapshot = await getDocs(projectsQuery);
-        setProjects(projectsSnapshot.docs.map(doc => doc.data().projectName));
+        setProjects(
+          projectsSnapshot.docs.map(doc => ({
+            id: doc.id,
+            projectName: doc.data().projectName
+          }))
+        );
       } catch (error) {
         console.error("Error fetching projects:", error);
       }
     };
     fetchProjects();
   }, [selectedClient]);
-
+  
   useEffect(() => {
     const fetchLifts = async () => {
-      if (!selectedProject) return;
-
+      if (!selectedProject) {
+        setLifts([]);
+        return;
+      }
+  
       try {
-        const projectDocRef = doc(db, "projects", selectedProject);
-        const projectDoc = await getDoc(projectDocRef);
-        const projectData = projectDoc.data();
-        setLifts(projectData?.lifts || []);
+        const liftsCollectionRef = collection(db, "projects", selectedProject, "lifts");
+        const liftsSnapshot = await getDocs(liftsCollectionRef);
+        const fetchedLifts = liftsSnapshot.docs.map((doc) => doc.data());
+        setLifts(fetchedLifts);
       } catch (error) {
         console.error("Error fetching lifts:", error);
       }
     };
+  
     fetchLifts();
   }, [selectedProject]);
-
+  
   const handleSubmit = async () => {
     if (!selectedClient || !selectedProject || !selectedLift || !date || !hours) {
       setMessage("Please fill out all required fields.");
@@ -118,26 +127,34 @@ function AddLossHours() {
         ))}
       </select>
 
-      <select className="input-field">
-      <option value="">Select Project</option>
-      {projects.map((project, index) => (
-        <option key={index} value={project}>{project}</option>
-      ))}
-    </select>
-
       <select
-        value={selectedLift}
-        onChange={(e) => setSelectedLift(e.target.value)}
-        className="input-field"
-        disabled={!selectedProject}
-      >
-        <option value="">Select Lift</option>
-        {lifts.map((lift, index) => (
-          <option key={index} value={lift.liftName}>
-            {lift.liftName}
-          </option>
-        ))}
-      </select>
+  value={selectedProject}
+  onChange={(e) => setSelectedProject(e.target.value)}
+  className="input-field"
+>
+  <option value="">Select Project</option>
+  {projects.map((project) => (
+    <option key={project.id} value={project.id}>
+      {project.projectName}
+    </option>
+  ))}
+</select>
+
+
+    <select
+  value={selectedLift}
+  onChange={(e) => setSelectedLift(e.target.value)}
+  className="input-field"
+  disabled={!selectedProject}
+>
+  <option value="">Select Lift</option>
+  {lifts.map((lift, index) => (
+    <option key={index} value={lift.liftName}>
+      {lift.liftName}
+    </option>
+  ))}
+</select>
+
 
       <input
         type="date"
