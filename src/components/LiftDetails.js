@@ -51,6 +51,7 @@ const LiftDetails = () => {
     }
   };
  
+  
 
   return (
     <div className="lift-details-container">
@@ -59,12 +60,12 @@ const LiftDetails = () => {
         <div key={stage.id} onClick={() => handleStageClick(stage)} className="stage-item">
           <p>Stage: {stage.stageName}</p>
           <p>Status: {stage.completionStatus ? "Completed" : "Not Completed"}</p>
-          {!stage.completionStatus && (
+          {!stage.completionStatus ? (
             <button onClick={() => markStageAsCompleted(stage.id)}>Mark as Completed</button>
-          )}
+          ):(
           <Link to={`/stage-details/${projectId}/${liftId}/${stage.id}`}>
             View Details
-          </Link>
+          </Link>)}
         </div>
       ))}
       
