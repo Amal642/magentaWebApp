@@ -8,7 +8,7 @@ import {
   query,
   where,
   doc,
-  getDoc
+  setDoc
 } from "firebase/firestore";
 // import "../css/AddLossHours.css";
 
@@ -16,6 +16,7 @@ function AddLossHours() {
   const [clients, setClients] = useState([]);
   const [projects, setProjects] = useState([]);
   const [lifts, setLifts] = useState([]);
+  const [workers, setWorkers] = useState([]);
   const [selectedClient, setSelectedClient] = useState("");
   const [selectedProject, setSelectedProject] = useState("");
   const [selectedLift, setSelectedLift] = useState("");
@@ -24,6 +25,8 @@ function AddLossHours() {
   const [hours, setHours] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedWorker, setSelectedWorker] = useState("");
+  const [selectedWorkersList, setSelectedWorkersList] = useState([]);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -57,7 +60,7 @@ function AddLossHours() {
     };
     fetchProjects();
   }, [selectedClient]);
-  
+
   useEffect(() => {
     const fetchLifts = async () => {
       if (!selectedProject) {
@@ -74,10 +77,33 @@ function AddLossHours() {
         console.error("Error fetching lifts:", error);
       }
     };
-  
     fetchLifts();
   }, [selectedProject]);
-  
+
+  useEffect(() => {
+    const fetchWorkers = async () => {
+      try {
+        const workersCollection = collection(db, "workers");
+        const workersSnapshot = await getDocs(workersCollection);
+        setWorkers(workersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      } catch (error) {
+        console.error("Error fetching workers:", error);
+      }
+    };
+    fetchWorkers();
+  }, []);
+
+  const addWorker = () => {
+    if (selectedWorker && !selectedWorkersList.includes(selectedWorker)) {
+      setSelectedWorkersList([...selectedWorkersList, selectedWorker]);
+      setSelectedWorker(""); // Clear the selection
+    }
+  };
+
+  const removeWorker = (worker) => {
+    setSelectedWorkersList(selectedWorkersList.filter(w => w !== worker));
+  };
+
   const handleSubmit = async () => {
     if (!selectedClient || !selectedProject || !selectedLift || !date || !hours) {
       setMessage("Please fill out all required fields.");
@@ -93,6 +119,7 @@ function AddLossHours() {
         date,
         remarks,
         hours: Number(hours),
+        workers: selectedWorkersList
       });
 
       setMessage("Loss hours added successfully!");
@@ -102,6 +129,7 @@ function AddLossHours() {
       setDate("");
       setRemarks("");
       setHours("");
+      setSelectedWorkersList([]);
     } catch (error) {
       console.error("Error adding loss hours:", error);
       setMessage("Failed to add loss hours. Please try again.");
@@ -128,33 +156,31 @@ function AddLossHours() {
       </select>
 
       <select
-  value={selectedProject}
-  onChange={(e) => setSelectedProject(e.target.value)}
-  className="input-field"
->
-  <option value="">Select Project</option>
-  {projects.map((project) => (
-    <option key={project.id} value={project.id}>
-      {project.projectName}
-    </option>
-  ))}
-</select>
+        value={selectedProject}
+        onChange={(e) => setSelectedProject(e.target.value)}
+        className="input-field"
+      >
+        <option value="">Select Project</option>
+        {projects.map((project) => (
+          <option key={project.id} value={project.id}>
+            {project.projectName}
+          </option>
+        ))}
+      </select>
 
-
-    <select
-  value={selectedLift}
-  onChange={(e) => setSelectedLift(e.target.value)}
-  className="input-field"
-  disabled={!selectedProject}
->
-  <option value="">Select Lift</option>
-  {lifts.map((lift, index) => (
-    <option key={index} value={lift.liftName}>
-      {lift.liftName}
-    </option>
-  ))}
-</select>
-
+      <select
+        value={selectedLift}
+        onChange={(e) => setSelectedLift(e.target.value)}
+        className="input-field"
+        disabled={!selectedProject}
+      >
+        <option value="">Select Lift</option>
+        {lifts.map((lift, index) => (
+          <option key={index} value={lift.liftName}>
+            {lift.liftName}
+          </option>
+        ))}
+      </select>
 
       <input
         type="date"
@@ -178,6 +204,34 @@ function AddLossHours() {
         onChange={(e) => setHours(e.target.value)}
         className="input-field"
       />
+
+      <div>
+        <label>Select Worker:</label>
+        <select
+          value={selectedWorker}
+          onChange={(e) => setSelectedWorker(e.target.value)}
+          className="input-field"
+        >
+          <option value="">Select Worker</option>
+          {workers.map((worker) => (
+            <option key={worker.id} value={worker.name}>
+              {worker.name}
+            </option>
+          ))}
+        </select>
+        <button onClick={addWorker}>Add Worker</button>
+      </div>
+
+      <div>
+        <h3>Selected Workers:</h3>
+        <ul>
+          {selectedWorkersList.map((worker, index) => (
+            <li key={index}>
+              {worker} <span onClick={() => removeWorker(worker)} style={{ cursor: "pointer", color: "red" }}>x</span>
+            </li>
+          ))}
+        </ul>
+      </div>
 
       <button onClick={handleSubmit} className="submit-button" disabled={loading}>
         Submit
