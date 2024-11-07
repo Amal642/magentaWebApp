@@ -1,11 +1,15 @@
 import React from "react";
-import "../App.css";
+import "../css/OwnerDashboard.css";
 
 function SupervisorPage() {
   return (
-    <div className="container">
-      <h2>Supervisor Page</h2>
-      <p>Welcome, you can only enter data here.</p>
+    <div className="admin-container">
+      <h2>Supervisor Dashboard</h2>
+      <div className="button-group">
+        <button className="admin-button">Today's Remainders</button>
+        <button className="admin-button">Enter Details of Workers</button>
+       
+      </div>
     </div>
   );
 }
