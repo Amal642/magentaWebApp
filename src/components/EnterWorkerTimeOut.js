@@ -1,25 +1,22 @@
-// src/pages/EnterWorkerDetails.js
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebaseConfig';
-import { collection, getDocs, addDoc, query, where, doc } from 'firebase/firestore';
-import '../css/enterworkers.css'
+import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
+import '../css/enterworkers.css';
 
-
-function EnterWorkerDetails() {
+function EnterWorkerTimeOut() {
   const [clients, setClients] = useState([]);
   const [projects, setProjects] = useState([]);
   const [lifts, setLifts] = useState([]);
   const [stages, setStages] = useState([]);
-  const [workers, setWorkers] = useState([]);
+  const [workersWithTimeIn, setWorkersWithTimeIn] = useState([]);
   const [selectedClient, setSelectedClient] = useState("");
   const [selectedProject, setSelectedProject] = useState("");
   const [selectedLift, setSelectedLift] = useState("");
   const [selectedStage, setSelectedStage] = useState("");
-  const [selectedWorker, setSelectedWorker] = useState("");
-  const [selectedWorkersList, setSelectedWorkersList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
+  // Fetch functions for clients, projects, lifts, and stages...
   useEffect(() => {
     const fetchClients = async () => {
       const clientsSnapshot = await getDocs(collection(db, "clients"));
@@ -59,70 +56,73 @@ function EnterWorkerDetails() {
     fetchStages();
   }, [selectedProject,selectedLift]);
 
-  useEffect(() => {
-    const fetchWorkers = async () => {
-      const workersSnapshot = await getDocs(collection(db, "workers"));
-      setWorkers(workersSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-    };
-    fetchWorkers();
-  }, []);
 
-  const addWorker = () => {
-    if (selectedWorker && !selectedWorkersList.some(w => w.name === selectedWorker)) {
-      setSelectedWorkersList([...selectedWorkersList, { name: selectedWorker, timeIn: "" }]);
-      setSelectedWorker("");
-    }
-  };
-
-  const removeWorker = (workerName) => {
-    setSelectedWorkersList(selectedWorkersList.filter(w => w.name !== workerName));
-  };
-
-  const handleTimeInChange = (index, time) => {
-    const updatedWorkers = [...selectedWorkersList];
-    updatedWorkers[index].timeIn = time;
-    setSelectedWorkersList(updatedWorkers);
-  };
-  const handleSubmit = async () => {
-    if (!selectedClient || !selectedProject || !selectedLift || !selectedStage || selectedWorkersList.length === 0) {
-        alert("Please fill out all fields and select at least one worker");
-        return;
-      }
+  const fetchWorkersWithTimeIn = async () => {
+    if (!selectedClient || !selectedProject || !selectedLift || !selectedStage) return;
 
     setLoading(true);
+    const workersQuery = query(
+      collection(db, "workerDetails"),
+      where("client", "==", selectedClient),
+      where("project", "==", selectedProject),
+      where("lift", "==", selectedLift),
+      where("stage", "==", selectedStage),
+      where("timeOut", "==", null) // fetch only those with no timeOut
+    );
 
-    const dateTime = new Date().toISOString();
+    const workersSnapshot = await getDocs(workersQuery);
+    const workersData = workersSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
 
-    try {
-      await addDoc(collection(db, "workerDetails"), {
-        client: selectedClient,
-        project: selectedProject,
-        lift: selectedLift,
-        stage: selectedStage,
-        workers: selectedWorkersList,
-        timeOut:null,
-        dateTime
-      });
-      alert("Worker details submitted successfully!");
-      setSelectedClient("");
-      setSelectedProject("");
-      setSelectedStage("");
-      setSelectedLift("");
-      setSelectedWorkersList([]);
-    } catch (error) {
-      console.error("Error submitting worker details:", error);
-      alert("Failed to submit worker details.");
-    }
-    finally {
-        setLoading(false);
-      }
+    setWorkersWithTimeIn(workersData);
+    setLoading(false);
   };
+
+  const handleTimeOutChange = (workerId, timeOut) => {
+    const updatedWorkers = workersWithTimeIn.map(worker =>
+      worker.id === workerId ? { ...worker, timeOut } : worker
+    );
+    setWorkersWithTimeIn(updatedWorkers);
+  };
+
+  const handleSubmit = async () => {
+    if (workersWithTimeIn.some(worker => !worker.timeOut)) {
+      alert("Please enter a Time Out for all selected workers.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const updatePromises = workersWithTimeIn.map(async (worker) => {
+        const workerRef = doc(db, "workerDetails", worker.id);
+        return updateDoc(workerRef, { timeOut: worker.timeOut });
+      });
+      await Promise.all(updatePromises);
+
+      setMessage("Time Out details submitted successfully!");
+      setWorkersWithTimeIn([]);
+    } catch (error) {
+      console.error("Error submitting Time Out details:", error);
+      setMessage("Failed to submit Time Out details.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedClient && selectedProject && selectedLift && selectedStage) {
+      fetchWorkersWithTimeIn();
+    }
+  }, [selectedClient, selectedProject, selectedLift, selectedStage]);
 
   return (
     <div className="enter-worker-details-container">
-  <h2>Enter Worker Details</h2>
+      <h2>Enter Worker Time Out</h2>
 
-  <select className="select-field" value={selectedClient} onChange={(e) => setSelectedClient(e.target.value)}>
+      {/* Existing dropdowns for client, project, lift, and stage */}
+      <select className="select-field" value={selectedClient} onChange={(e) => setSelectedClient(e.target.value)}>
     <option value="">Select Client</option>
     {clients.map(client => (
       <option key={client.id} value={client.name}>{client.name}</option>
@@ -150,36 +150,18 @@ function EnterWorkerDetails() {
     ))}
   </select>
 
-  <div>
-        <label>Select Worker:</label>
-        <select
-          value={selectedWorker}
-          onChange={(e) => setSelectedWorker(e.target.value)}
-          className="input-field"
-        >
-          <option value="">Select Worker</option>
-          {workers.map((worker) => (
-            <option key={worker.id} value={worker.name}>
-              {worker.name}
-            </option>
-          ))}
-        </select>
-        <button onClick={addWorker} className="add-worker-button">Add Worker</button>
-      </div>
-
       <div>
-        <h3>Selected Workers:</h3>
+        <h3>Workers with Time In:</h3>
         <ul className="selected-workers-list">
-          {selectedWorkersList.map((worker, index) => (
-            <li key={index} className="selected-worker-item">
-              {worker.name} 
+          {workersWithTimeIn.map((worker) => (
+            <li key={worker.id} className="selected-worker-item">
+              {worker.name} (Time In: {worker.timeIn}) 
               <input 
                 type="time" 
-                value={worker.timeIn} 
-                onChange={(e) => handleTimeInChange(index, e.target.value)}
+                value={worker.timeOut || ""} 
+                onChange={(e) => handleTimeOutChange(worker.id, e.target.value)}
                 className="time-input"
               />
-              <span onClick={() => removeWorker(worker.name)} className="remove-worker">x</span>
             </li>
           ))}
         </ul>
@@ -196,8 +178,7 @@ function EnterWorkerDetails() {
         </div>
       )}
     </div>
-
   );
 }
 
-export default EnterWorkerDetails;
+export default EnterWorkerTimeOut;

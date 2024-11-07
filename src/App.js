@@ -19,6 +19,7 @@ import CompletedProjectDetails from "./components/CompletedProjectDetails";
 import OutOfScopeWorks from "./components/OutOfScopeWorks";
 import Remainders from "./components/Remainders";
 import EnterWorkerDetails from "./components/EnterWorkerDetails";
+import EnterWorkerTimeOut from "./components/EnterWorkerTimeOut";
 
 function App() {
   return (
@@ -43,6 +44,7 @@ function App() {
           <Route path="/add-outofscope" element={<OutOfScopeWorks/>}/>
           <Route path="/add-remainders" element={<Remainders/>}/>
           <Route path="/add-WorkerDetails" element={<EnterWorkerDetails/>}/>
+          <Route path="/add-worker-timeout" element={<EnterWorkerTimeOut/>}/>
           </Routes>
       </div>
     </Router>
