@@ -18,6 +18,7 @@ import CompletedProjects from "./components/completedProjects";
 import CompletedProjectDetails from "./components/CompletedProjectDetails";
 import OutOfScopeWorks from "./components/OutOfScopeWorks";
 import Remainders from "./components/Remainders";
+import EnterWorkerDetails from "./components/EnterWorkerDetails";
 
 function App() {
   return (
@@ -41,7 +42,7 @@ function App() {
           <Route path="/completedProjects/:projectId" element={<CompletedProjectDetails />} />
           <Route path="/add-outofscope" element={<OutOfScopeWorks/>}/>
           <Route path="/add-remainders" element={<Remainders/>}/>
-
+          <Route path="/add-WorkerDetails" element={<EnterWorkerDetails/>}/>
           </Routes>
       </div>
     </Router>
