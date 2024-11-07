@@ -37,7 +37,7 @@ function AddClient() {
       }
 
       // Add new client to Firestore
-      const clientDoc = await addDoc(clientsRef, { name: clientName });
+      const clientDoc = await addDoc(clientsRef, { name: clientName,completedStatus:false });
 
       // Add stages as a sub-collection inside the client document
       const stagesCollectionRef = collection(clientDoc, "liftPhases");

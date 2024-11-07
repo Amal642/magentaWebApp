@@ -1,0 +1,22 @@
+.input-field {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+  }
+  
+  .submit-button {
+    padding: 8px 16px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .message {
+    margin-top: 8px;
+    color: #4CAF50;
+  }
+  
