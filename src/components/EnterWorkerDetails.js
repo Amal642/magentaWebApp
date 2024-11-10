@@ -69,7 +69,7 @@ function EnterWorkerDetails() {
 
   const addWorker = () => {
     if (selectedWorker && !selectedWorkersList.some(w => w.name === selectedWorker)) {
-      setSelectedWorkersList([...selectedWorkersList, { name: selectedWorker, timeIn: "" }]);
+      setSelectedWorkersList([...selectedWorkersList, { name: selectedWorker, timeIn: "" ,timeOut:null}]);
       setSelectedWorker("");
     }
   };
@@ -100,7 +100,6 @@ function EnterWorkerDetails() {
         lift: selectedLift,
         stage: selectedStage,
         workers: selectedWorkersList,
-        timeOut:null,
         dateTime
       });
       alert("Worker details submitted successfully!");

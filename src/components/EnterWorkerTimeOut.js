@@ -16,7 +16,6 @@ function EnterWorkerTimeOut() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  // Fetch functions for clients, projects, lifts, and stages...
   useEffect(() => {
     const fetchClients = async () => {
       const clientsSnapshot = await getDocs(collection(db, "clients"));
@@ -24,7 +23,7 @@ function EnterWorkerTimeOut() {
     };
     fetchClients();
   }, []);
-  console.log("SelectedClient "+selectedClient);
+
   useEffect(() => {
     const fetchProjects = async () => {
       if (!selectedClient) return;
@@ -54,8 +53,7 @@ function EnterWorkerTimeOut() {
       setStages(stagesSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
     };
     fetchStages();
-  }, [selectedProject,selectedLift]);
-
+  }, [selectedProject, selectedLift]);
 
   const fetchWorkersWithTimeIn = async () => {
     if (!selectedClient || !selectedProject || !selectedLift || !selectedStage) return;
@@ -66,41 +64,52 @@ function EnterWorkerTimeOut() {
       where("client", "==", selectedClient),
       where("project", "==", selectedProject),
       where("lift", "==", selectedLift),
-      where("stage", "==", selectedStage),
-      where("timeOut", "==", null) // fetch only those with no timeOut
+      where("stage", "==", selectedStage)
     );
 
     const workersSnapshot = await getDocs(workersQuery);
-    const workersData = workersSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    const workersData = [];
+
+    workersSnapshot.forEach(doc => {
+      const workerDoc = doc.data();
+      workerDoc.workers = workerDoc.workers.filter(worker => worker.timeIn && !worker.timeOut);
+      if (workerDoc.workers.length > 0) {
+        workersData.push({ id: doc.id, ...workerDoc });
+      }
+    });
 
     setWorkersWithTimeIn(workersData);
     setLoading(false);
   };
 
-  const handleTimeOutChange = (workerId, timeOut) => {
-    const updatedWorkers = workersWithTimeIn.map(worker =>
-      worker.id === workerId ? { ...worker, timeOut } : worker
-    );
+  // Handle timeOut change for individual workers
+  const handleTimeOutChange = (docId, workerIndex, timeOut) => {
+    const updatedWorkers = workersWithTimeIn.map(item => {
+      if (item.id === docId) {
+        const updatedWorkerList = [...item.workers];
+        updatedWorkerList[workerIndex] = { ...updatedWorkerList[workerIndex], timeOut };
+        return { ...item, workers: updatedWorkerList };
+      }
+      return item;
+    });
     setWorkersWithTimeIn(updatedWorkers);
   };
 
+  // Submit function to update individual timeOut in Firebase
   const handleSubmit = async () => {
-    if (workersWithTimeIn.some(worker => !worker.timeOut)) {
-      alert("Please enter a Time Out for all selected workers.");
-      return;
-    }
-
     setLoading(true);
     try {
-      const updatePromises = workersWithTimeIn.map(async (worker) => {
-        const workerRef = doc(db, "workerDetails", worker.id);
-        return updateDoc(workerRef, { timeOut: worker.timeOut });
-      });
-      await Promise.all(updatePromises);
+      const updatePromises = workersWithTimeIn.map(async (workerDoc) => {
+        const workerRef = doc(db, "workerDetails", workerDoc.id);
+        const updatedWorkers = workerDoc.workers.map(worker => ({
+          ...worker,
+          timeOut: worker.timeOut || null, // Ensure only updated workers have timeOut
+        }));
 
+        await updateDoc(workerRef, { workers: updatedWorkers });
+      });
+
+      await Promise.all(updatePromises);
       setMessage("Time Out details submitted successfully!");
       setWorkersWithTimeIn([]);
     } catch (error) {
@@ -121,49 +130,53 @@ function EnterWorkerTimeOut() {
     <div className="enter-worker-details-container">
       <h2>Enter Worker Time Out</h2>
 
-      {/* Existing dropdowns for client, project, lift, and stage */}
       <select className="select-field" value={selectedClient} onChange={(e) => setSelectedClient(e.target.value)}>
-    <option value="">Select Client</option>
-    {clients.map(client => (
-      <option key={client.id} value={client.name}>{client.name}</option>
-    ))}
-  </select>
+        <option value="">Select Client</option>
+        {clients.map(client => (
+          <option key={client.id} value={client.name}>{client.name}</option>
+        ))}
+      </select>
 
-  <select className="select-field" value={selectedProject} onChange={(e) => setSelectedProject(e.target.value)} disabled={!selectedClient}>
-    <option value="">Select Project</option>
-    {projects.map(project => (
-      <option key={project.id} value={project.id}>{project.projectName}</option>
-    ))}
-  </select>
+      <select className="select-field" value={selectedProject} onChange={(e) => setSelectedProject(e.target.value)} disabled={!selectedClient}>
+        <option value="">Select Project</option>
+        {projects.map(project => (
+          <option key={project.id} value={project.id}>{project.projectName}</option>
+        ))}
+      </select>
 
-  <select className="select-field" value={selectedLift} onChange={(e) => setSelectedLift(e.target.value)} disabled={!selectedProject}>
-    <option value="">Select Lift</option>
-    {lifts.map(lift => (
-      <option key={lift.id} value={lift.id}>{lift.liftName}</option>
-    ))}
-  </select>
+      <select className="select-field" value={selectedLift} onChange={(e) => setSelectedLift(e.target.value)} disabled={!selectedProject}>
+        <option value="">Select Lift</option>
+        {lifts.map(lift => (
+          <option key={lift.id} value={lift.id}>{lift.liftName}</option>
+        ))}
+      </select>
 
-  <select className="select-field" value={selectedStage} onChange={(e) => setSelectedStage(e.target.value)} disabled={!selectedLift}>
-    <option value="">Select Stage</option>
-    {stages.map(stage => (
-      <option key={stage.id} value={stage.id}>{stage.stageName}</option>
-    ))}
-  </select>
+      <select className="select-field" value={selectedStage} onChange={(e) => setSelectedStage(e.target.value)} disabled={!selectedLift}>
+        <option value="">Select Stage</option>
+        {stages.map(stage => (
+          <option key={stage.id} value={stage.id}>{stage.stageName}</option>
+        ))}
+      </select>
 
       <div>
         <h3>Workers with Time In:</h3>
         <ul className="selected-workers-list">
-          {workersWithTimeIn.map((worker) => (
-            <li key={worker.id} className="selected-worker-item">
-              {worker.name} (Time In: {worker.timeIn}) 
-              <input 
-                type="time" 
-                value={worker.timeOut || ""} 
-                onChange={(e) => handleTimeOutChange(worker.id, e.target.value)}
-                className="time-input"
-              />
-            </li>
-          ))}
+          {workersWithTimeIn.map(workerDoc =>
+            workerDoc.workers.map((worker, index) => (
+              <li key={`${workerDoc.id}-${index}`} className="selected-worker-item">
+                <p>{worker.name} - Time In: {worker.timeIn}</p>
+                <label>
+                  Enter Time Out:
+                  <input 
+                    type="time" 
+                    value={worker.timeOut || ""} 
+                    onChange={(e) => handleTimeOutChange(workerDoc.id, index, e.target.value)}
+                    className="time-input"
+                  />
+                </label>
+              </li>
+            ))
+          )}
         </ul>
       </div>
 
