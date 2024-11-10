@@ -13,6 +13,8 @@ function SupervisorPage() {
         <button className="admin-button"  onClick={() => navigate("/add-worker-absence")}>Enter Absent Workers</button>
         <button className="admin-button" onClick={() => navigate("/enter-project-completion")}>Enter Project Completion Details</button>
         <button className="admin-button" onClick={() => navigate("/add-worker-timeout")}>Enter Time-Out Details</button>
+        <button className="admin-button" onClick={() => navigate("/add-loss-hours")}>Enter Loss of Hours</button>
+        <button className="admin-button" onClick={() => navigate("/add-outofscope")}>Enter Out of Scope Works</button>
       </div>
     </div>
   );
