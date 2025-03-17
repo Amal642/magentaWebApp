@@ -3,6 +3,7 @@ import { db } from "../firebaseConfig";
 import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import * as XLSX from "xlsx";
 import "../css/AddClient.css";
+import GoBackHomeButton from "./GoBackHomeButton";
 
 function AddWorkers() {
   const [workerName, setWorkerName] = useState("");
@@ -65,6 +66,7 @@ function AddWorkers() {
 
   return (
     <div className={`add-client-container ${loading ? "blur" : ""}`}>
+      
       <h2>Add New Worker</h2>
       <input
         type="text"
@@ -89,6 +91,7 @@ function AddWorkers() {
       
       {message && <p className="message">{message}</p>}
       {loading && <div className="spinner-overlay"><div className="spinner"></div></div>}
+      <GoBackHomeButton />
     </div>
   );
 }
