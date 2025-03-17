@@ -5,7 +5,6 @@ import Login from "./components/Login";
 import OwnerDashboard from "./components/OwnerDashboard";
 import SupervisorPage from "./components/SupervisorPage";
 import AddClient from "./components/AddClient";
-import AddSupervisor from "./components/AddSupervisor";
 import AddWorkers from "./components/AddWorkers";
 import AddProject from "./components/AddProject";
 import AddWorkerAbsence from "./components/AddWorkerAbsence";
@@ -31,7 +30,6 @@ function App() {
           <Route path="/owner-dashboard" element={<OwnerDashboard />} />
           <Route path="/supervisor-page" element={<SupervisorPage />} />
           <Route path="/add-client" element={<AddClient />} />
-          <Route path="/add-supervisor" element={<AddSupervisor />} />
           <Route path="/add-worker" element={<AddWorkers />} />
           <Route path="/add-project" element={<AddProject/>}/>
           <Route path="/add-worker-absence" element={<AddWorkerAbsence/>}/>

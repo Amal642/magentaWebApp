@@ -16,7 +16,6 @@ function OwnerDashboard() {
         <button className="admin-button" onClick={() => navigate("/ongoing-projects")}>On Going Projects</button>
         <button className="admin-button" onClick={() => navigate("/completedProjects")}>Completed Projects</button>
         {/* <button className="admin-button">Completed Clients</button> */}
-        <button className="admin-button" onClick={() => navigate("/add-supervisor")}>Enter Supervisor Details</button>
         <button className="admin-button" onClick={() => navigate("/add-worker")}>Enter Workers Details</button>
         <button className="admin-button" onClick={()=>navigate("/add-loss-hours")}>Enter Loss of hours</button>
         <button className="admin-button" onClick={()=>navigate("/add-outofscope")}>Enter Out of Scope works</button>
