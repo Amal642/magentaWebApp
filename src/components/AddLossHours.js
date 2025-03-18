@@ -10,7 +10,7 @@ import {
   doc,
   setDoc
 } from "firebase/firestore";
-import GoBackHomeButton from "./GoBackHomeButton";
+
 // import "../css/AddLossHours.css";
 
 function AddLossHours() {
