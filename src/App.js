@@ -20,6 +20,7 @@ import Remainders from "./components/Remainders";
 import EnterWorkerDetails from "./components/EnterWorkerDetails";
 import EnterWorkerTimeOut from "./components/EnterWorkerTimeOut";
 import EnterProjectCompletion from "./components/EnterProjectCompletion";
+import ViewRemainders from "./components/ViewRemainders";
 
 function App() {
   return (
@@ -45,6 +46,7 @@ function App() {
           <Route path="/add-WorkerDetails" element={<EnterWorkerDetails/>}/>
           <Route path="/add-worker-timeout" element={<EnterWorkerTimeOut/>}/>
           <Route path="/enter-project-completion" element={<EnterProjectCompletion/>}/>
+          <Route path="/view-remainders" element={<ViewRemainders/>}/>
           </Routes>
       </div>
     </Router>

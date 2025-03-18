@@ -10,7 +10,7 @@ function OwnerDashboard() {
     <div className="admin-container">
       <h2>Admin Dashboard</h2>
       <div className="button-group">
-        <button className="admin-button">Today's Remainders</button>
+        <button className="admin-button" onClick={() => navigate("/view-remainders")}>Today's Reminders</button>
         <button className="admin-button" onClick={() => navigate("/add-client")}>Add New Client</button>
         <button className="admin-button" onClick={() => navigate("/add-project")}>Add New Project</button>
         <button className="admin-button" onClick={() => navigate("/ongoing-projects")}>On Going Projects</button>

@@ -19,4 +19,17 @@
     margin-top: 8px;
     color: #4CAF50;
   }
+
+  .delete-button {
+    background: none;
+    border: none;
+    color: red;
+    cursor: pointer;
+    font-size: 18px;
+    margin-left: 10px;
+  }
+  .delete-button:hover {
+    color: darkred;
+  }
+  
   
