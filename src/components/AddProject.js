@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { db } from "../firebaseConfig";
 import { collection, getDocs, query, where, addDoc } from "firebase/firestore";
 import "../css/AddProject.css";
+import GoBackHomeButton from "./GoBackHomeButton";
 
 function AddProject() {
   const [clients, setClients] = useState([]);
@@ -224,6 +225,7 @@ function AddProject() {
       </button>
       {message && <p className="message">{message}</p>}
       {loading && <div className="spinner-overlay"><div className="spinner"></div></div>}
+      <GoBackHomeButton />
     </div>
   );
 }

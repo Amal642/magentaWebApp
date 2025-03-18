@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { db } from "../firebaseConfig";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+import GoBackHomeButton from "./GoBackHomeButton";
 
 function CompletedProjects() {
   const [completedProjects, setCompletedProjects] = useState([]);
@@ -33,6 +34,7 @@ function CompletedProjects() {
           <button onClick={() => navigate(`/completedProjects/${project.id}`)}>View Details</button>
         </div>
       ))}
+      <GoBackHomeButton />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { db } from "../firebaseConfig";
 import { collection, addDoc } from "firebase/firestore";
 import '../css/reminders.css'
+import GoBackHomeButton from "./GoBackHomeButton";
 
 function Remainders() {
   const [remainder, setRemainder] = useState("");
@@ -41,6 +42,7 @@ function Remainders() {
         Submit
       </button>
       {message && <p className="message">{message}</p>}
+      <GoBackHomeButton />
     </div>
   );
 }

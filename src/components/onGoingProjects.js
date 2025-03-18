@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { collection, query, where, getDocs, updateDoc, doc } from "firebase/firestore";
 import { db } from "../firebaseConfig"; // Adjust the path to your Firebase configuration
 import "../css/onGoingProjects.css";
+import GoBackHomeButton from "./GoBackHomeButton";
 
 const OnGoingProjects = () => {
     const [projects, setProjects] = useState([]);
@@ -54,6 +55,7 @@ const OnGoingProjects = () => {
           <p>Client: {project.client}</p>
           <p>Location: {project.location}</p>
           <button onClick={() => markAsCompleted(project.id)}>Mark as Completed</button>
+          <GoBackHomeButton />
         </div>
       ))}
     </div>

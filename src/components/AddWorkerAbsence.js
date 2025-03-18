@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../firebaseConfig";
 import { collection, getDocs, addDoc } from "firebase/firestore";
+import GoBackHomeButton from "./GoBackHomeButton";
 // import "../css/AddWorkerAbsence.css";
 
 function AddWorkerAbsence() {
@@ -101,6 +102,7 @@ function AddWorkerAbsence() {
       
       {message && <p className="message">{message}</p>}
       {loading && <div className="spinner-overlay"><div className="spinner"></div></div>}
+      
     </div>
   );
 }

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { db } from "../firebaseConfig";
 import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import "../css/AddClient.css";
+import GoBackHomeButton from "./GoBackHomeButton";
 
 function AddClient() {
   const [clientName, setClientName] = useState("");
@@ -108,6 +109,7 @@ function AddClient() {
       </button>
       {message && <p className="message">{message}</p>}
       {loading && <div className="spinner-overlay"><div className="spinner"></div></div>}
+      <GoBackHomeButton />
     </div>
   );
 }
