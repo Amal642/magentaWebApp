@@ -1,7 +1,7 @@
 // src/pages/EnterWorkerDetails.js
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebaseConfig';
-import { collection, getDocs, addDoc, query, where, doc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, query, where, doc,getDoc,setDoc } from 'firebase/firestore';
 import '../css/enterworkers.css'
 
 
@@ -87,35 +87,53 @@ function EnterWorkerDetails() {
     if (!selectedClient || !selectedProject || !selectedLift || !selectedStage || selectedWorkersList.length === 0) {
         alert("Please fill out all fields and select at least one worker");
         return;
-      }
+    }
 
     setLoading(true);
-
-    const dateTime = new Date().toISOString();
+    const currentDate = new Date().toISOString();
 
     try {
-      await addDoc(collection(db, "workerDetails"), {
-        client: selectedClient,
-        project: selectedProject,
-        lift: selectedLift,
-        stage: selectedStage,
-        workers: selectedWorkersList,
-        dateTime
-      });
-      alert("Worker details submitted successfully!");
-      setSelectedClient("");
-      setSelectedProject("");
-      setSelectedStage("");
-      setSelectedLift("");
-      setSelectedWorkersList([]);
+        const projectRef = doc(db, "projects", selectedProject);
+        const liftRef = doc(db, "projects", selectedProject, "lifts", selectedLift);
+        const stageRef = doc(db, "projects", selectedProject, "lifts", selectedLift, "stages", selectedStage);
+
+        // Function to check and set startDate if not exists
+        const checkAndSetStartDate = async (ref) => {
+            const snapshot = await getDoc(ref);
+            if (!snapshot.exists() || !snapshot.data().startDate) {
+                await setDoc(ref, { startDate: currentDate }, { merge: true });
+            }
+        };
+
+        // Ensure startDate is set
+        await checkAndSetStartDate(projectRef);
+        await checkAndSetStartDate(liftRef);
+        await checkAndSetStartDate(stageRef);
+
+        // Submit Worker Details
+        await addDoc(collection(db, "workerDetails"), {
+            client: selectedClient,
+            project: selectedProject,
+            lift: selectedLift,
+            stage: selectedStage,
+            workers: selectedWorkersList,
+            dateTime: currentDate
+        });
+
+        alert("Worker details submitted successfully!");
+        setSelectedClient("");
+        setSelectedProject("");
+        setSelectedStage("");
+        setSelectedLift("");
+        setSelectedWorkersList([]);
     } catch (error) {
-      console.error("Error submitting worker details:", error);
-      alert("Failed to submit worker details.");
-    }
-    finally {
+        console.error("Error submitting worker details:", error);
+        alert("Failed to submit worker details.");
+    } finally {
         setLoading(false);
-      }
-  };
+    }
+};
+
 
   return (
     <div className="enter-worker-details-container">

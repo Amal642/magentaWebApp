@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { db } from '../firebaseConfig';
-import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
-import '../css/enterProjectCompletion.css';
+import React, { useState, useEffect } from "react";
+import { db } from "../firebaseConfig";
+import { collection, query, where, getDocs, updateDoc, doc } from "firebase/firestore";
+import "../css/enterProjectCompletion.css";
 
 function EnterProjectCompletion() {
   const [clients, setClients] = useState([]);
@@ -11,10 +11,10 @@ function EnterProjectCompletion() {
   const [selectedClient, setSelectedClient] = useState("");
   const [selectedProject, setSelectedProject] = useState("");
   const [selectedLift, setSelectedLift] = useState("");
+  const [completionDates, setCompletionDates] = useState({});
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  // Fetch clients, projects, lifts, and stages from Firebase...
   useEffect(() => {
     const fetchClients = async () => {
       const clientsSnapshot = await getDocs(collection(db, "clients"));
@@ -54,17 +54,27 @@ function EnterProjectCompletion() {
     fetchStages();
   }, [selectedProject, selectedLift]);
 
-  // Mark stage as completed
+  const handleDateChange = (stageId, date) => {
+    setCompletionDates((prev) => ({ ...prev, [stageId]: date }));
+  };
+
   const markStageCompleted = async (stageId) => {
+    if (!completionDates[stageId]) {
+      setMessage("Please enter a completion date before marking as completed.");
+      return;
+    }
+
     setLoading(true);
     try {
       const stageRef = doc(db, "projects", selectedProject, "lifts", selectedLift, "stages", stageId);
-      await updateDoc(stageRef, { completionStatus: true });
+      await updateDoc(stageRef, {
+        completionStatus: true,
+        completionDate: completionDates[stageId],
+      });
 
-      // Update local state to reflect the change
       setStages((prevStages) =>
         prevStages.map((stage) =>
-          stage.id === stageId ? { ...stage, completionStatus: true } : stage
+          stage.id === stageId ? { ...stage, completionStatus: true, completionDate: completionDates[stageId] } : stage
         )
       );
       setMessage("Stage marked as completed!");
@@ -80,24 +90,23 @@ function EnterProjectCompletion() {
     <div className="enter-project-completion-container">
       <h2>Enter Project Completion</h2>
 
-      {/* Dropdown selectors for client, project, and lift */}
       <select className="select-field" value={selectedClient} onChange={(e) => setSelectedClient(e.target.value)}>
         <option value="">Select Client</option>
-        {clients.map(client => (
+        {clients.map((client) => (
           <option key={client.id} value={client.name}>{client.name}</option>
         ))}
       </select>
 
       <select className="select-field" value={selectedProject} onChange={(e) => setSelectedProject(e.target.value)} disabled={!selectedClient}>
         <option value="">Select Project</option>
-        {projects.map(project => (
+        {projects.map((project) => (
           <option key={project.id} value={project.id}>{project.projectName}</option>
         ))}
       </select>
 
       <select className="select-field" value={selectedLift} onChange={(e) => setSelectedLift(e.target.value)} disabled={!selectedProject}>
         <option value="">Select Lift</option>
-        {lifts.map(lift => (
+        {lifts.map((lift) => (
           <option key={lift.id} value={lift.id}>{lift.liftName}</option>
         ))}
       </select>
@@ -110,15 +119,23 @@ function EnterProjectCompletion() {
               <span>{stage.stageName}</span>
               <span>
                 {stage.completionStatus ? (
-                  <span className="completed-text">Completed</span>
+                  <span className="completed-text">Completed on {stage.completionDate}</span>
                 ) : (
-                  <button
-                    onClick={() => markStageCompleted(stage.id)}
-                    className="mark-completed-button"
-                    disabled={loading}
-                  >
-                    Mark as Completed
-                  </button>
+                  <>
+                    <input
+                      type="date"
+                      className="date-input"
+                      value={completionDates[stage.id] || ""}
+                      onChange={(e) => handleDateChange(stage.id, e.target.value)}
+                    />
+                    <button
+                      onClick={() => markStageCompleted(stage.id)}
+                      className="mark-completed-button"
+                      disabled={loading}
+                    >
+                      Mark as Completed
+                    </button>
+                  </>
                 )}
               </span>
             </li>

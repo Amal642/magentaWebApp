@@ -7,6 +7,7 @@ const StageDetailsPage = () => {
   const { projectId, liftId, stageId } = useParams();
   const [claimableAmount, setClaimableAmount] = useState(0);
   const [daysMentioned, setDaysMentioned] = useState(0);
+  const [daysTook, setDaysTook] = useState(0); // State for storing the calculated days took
   const [selectedClient, setSelectedClient] = useState(null);
 
   useEffect(() => {
@@ -58,6 +59,16 @@ const StageDetailsPage = () => {
 
             // Set days mentioned from the stage's `stageDays`
             setDaysMentioned(stageData?.stageDays || 0);
+
+            // Calculate the days took by subtracting the startDate from the completionDate
+            const startDate = new Date(stageData?.startDate); // Convert startDate to a Date object
+            const completionDate = new Date(stageData?.completionDate); // Convert completionDate to a Date object
+
+            // Calculate the difference in time and convert to days
+            const timeDifference = completionDate - startDate;
+            const daysDifference = Math.floor(timeDifference / (1000 * 60 * 60 * 24)); // Convert milliseconds to days
+
+            setDaysTook(daysDifference); // Set the calculated days took
           } else {
             console.log("No client document found with the name:", clientName);
           }
@@ -75,7 +86,7 @@ const StageDetailsPage = () => {
       <h2>Stage Details</h2>
       <p><strong>Claimable Amount:</strong> {claimableAmount} AED</p>
       <p><strong>Days Mentioned:</strong> {daysMentioned} days</p>
-      <p><strong>Days Took:</strong> {/* Placeholder for future calculation */}</p>
+      <p><strong>Days Took:</strong> {daysTook} days</p>
       <p><strong>Profit/Loss:</strong> {/* Placeholder for future calculation */}</p>
     </div>
   );
