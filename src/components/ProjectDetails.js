@@ -27,7 +27,9 @@ const ProjectDetails = () => {
   const markLiftAsCompleted = async (liftId) => {
     try {
       const liftRef = doc(db, "projects", projectId, "lifts", liftId);
-      await updateDoc(liftRef, { completionStatus: true });
+      await updateDoc(liftRef, { completionStatus: true ,
+        completionDate: new Date().toISOString()
+      });
       
       // Update the lifts state to immediately reflect the change
       setLifts((prevLifts) =>

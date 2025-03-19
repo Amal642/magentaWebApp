@@ -33,18 +33,23 @@ const OnGoingProjects = () => {
   // Mark a project as completed
   const markAsCompleted = async (projectId) => {
     try {
-      const projectRef = doc(db, "projects", projectId);
-      await updateDoc(projectRef, { completionStatus: true });
-      setProjects(projects.filter(project => project.id !== projectId)); // Remove project from list
+        const projectRef = doc(db, "projects", projectId);
+        await updateDoc(projectRef, { 
+            completionStatus: true,
+            completionDate: new Date().toISOString() // Stores completion date as ISO string
+        });
+        setProjects(projects.filter(project => project.id !== projectId)); // Remove project from list
     } catch (error) {
-      console.error("Error updating completion status:", error);
+        console.error("Error updating completion status:", error);
     }
-  };
+};
+
 
   
   return (
     <div className="ongoing-projects-container">
       <h2>Ongoing Projects</h2>
+      
       {projects.map((project) => (
         <div 
           key={project.id} 
@@ -55,9 +60,10 @@ const OnGoingProjects = () => {
           <p>Client: {project.client}</p>
           <p>Location: {project.location}</p>
           <button onClick={() => markAsCompleted(project.id)}>Mark as Completed</button>
-          <GoBackHomeButton />
+          
         </div>
       ))}
+      <GoBackHomeButton />
     </div>
   );
 };
